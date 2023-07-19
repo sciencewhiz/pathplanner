@@ -4,14 +4,13 @@ import com.pathplanner.lib.PathPlannerTrajectory;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FollowPathWithEvents extends CommandBase {
+public class FollowPathWithEvents extends Command {
   private final Command pathFollowingCommand;
   private final List<PathPlannerTrajectory.EventMarker> pathMarkers;
   private final Map<String, Command> eventMap;

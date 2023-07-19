@@ -109,7 +109,7 @@ public abstract class BaseAutoBuilder {
    * @param trajectory The trajectory to follow
    * @return A path following command for the given trajectory
    */
-  public abstract CommandBase followPath(PathPlannerTrajectory trajectory);
+  public abstract Command followPath(PathPlannerTrajectory trajectory);
 
   /**
    * Create a sequential command group that will follow each path in a path group. This will not
@@ -118,14 +118,14 @@ public abstract class BaseAutoBuilder {
    * @param pathGroup The path group to follow
    * @return Command for following all paths in the group
    */
-  public CommandBase followPathGroup(List<PathPlannerTrajectory> pathGroup) {
-    List<CommandBase> commands = new ArrayList<>();
+  public Command followPathGroup(List<PathPlannerTrajectory> pathGroup) {
+    List<Command> commands = new ArrayList<>();
 
     for (PathPlannerTrajectory path : pathGroup) {
       commands.add(this.followPath(path));
     }
 
-    return Commands.sequence(commands.toArray(CommandBase[]::new));
+    return Commands.sequence(commands.toArray(Command[]::new));
   }
 
   /**
@@ -134,7 +134,7 @@ public abstract class BaseAutoBuilder {
    * @param trajectory The trajectory to follow
    * @return Command that will follow the trajectory and trigger events
    */
-  public CommandBase followPathWithEvents(PathPlannerTrajectory trajectory) {
+  public Command followPathWithEvents(PathPlannerTrajectory trajectory) {
     return new FollowPathWithEvents(followPath(trajectory), trajectory.getMarkers(), eventMap);
   }
 
@@ -145,14 +145,14 @@ public abstract class BaseAutoBuilder {
    * @param pathGroup The path group to follow
    * @return Command for following all paths in the group
    */
-  public CommandBase followPathGroupWithEvents(List<PathPlannerTrajectory> pathGroup) {
-    List<CommandBase> commands = new ArrayList<>();
+  public Command followPathGroupWithEvents(List<PathPlannerTrajectory> pathGroup) {
+    List<Command> commands = new ArrayList<>();
 
     for (PathPlannerTrajectory path : pathGroup) {
       commands.add(followPathWithEvents(path));
     }
 
-    return Commands.sequence(commands.toArray(CommandBase[]::new));
+    return Commands.sequence(commands.toArray(Command[]::new));
   }
 
   /**
@@ -162,7 +162,7 @@ public abstract class BaseAutoBuilder {
    * @param trajectory The trajectory to reset the pose for
    * @return Command that will reset the pose
    */
-  public CommandBase resetPose(PathPlannerTrajectory trajectory) {
+  public Command resetPose(PathPlannerTrajectory trajectory) {
     if (drivetrainType == DrivetrainType.HOLONOMIC) {
       return Commands.runOnce(
           () -> {
@@ -198,7 +198,7 @@ public abstract class BaseAutoBuilder {
    * @param eventCommand The event command to wrap
    * @return Wrapped event command
    */
-  protected static CommandBase wrappedEventCommand(Command eventCommand) {
+  protected static Command wrappedEventCommand(Command eventCommand) {
     return new FunctionalCommand(
         eventCommand::initialize,
         eventCommand::execute,
@@ -207,8 +207,8 @@ public abstract class BaseAutoBuilder {
         eventCommand.getRequirements().toArray(Subsystem[]::new));
   }
 
-  protected CommandBase getStopEventCommands(StopEvent stopEvent) {
-    List<CommandBase> commands = new ArrayList<>();
+  protected Command getStopEventCommands(StopEvent stopEvent) {
+    List<Command> commands = new ArrayList<>();
 
     int startIndex = stopEvent.executionBehavior == ExecutionBehavior.PARALLEL_DEADLINE ? 1 : 0;
     for (int i = startIndex; i < stopEvent.names.size(); i++) {
@@ -220,15 +220,15 @@ public abstract class BaseAutoBuilder {
 
     switch (stopEvent.executionBehavior) {
       case SEQUENTIAL:
-        return Commands.sequence(commands.toArray(CommandBase[]::new));
+        return Commands.sequence(commands.toArray(Command[]::new));
       case PARALLEL:
-        return Commands.parallel(commands.toArray(CommandBase[]::new));
+        return Commands.parallel(commands.toArray(Command[]::new));
       case PARALLEL_DEADLINE:
         Command deadline =
             eventMap.containsKey(stopEvent.names.get(0))
                 ? wrappedEventCommand(eventMap.get(stopEvent.names.get(0)))
                 : Commands.none();
-        return Commands.deadline(deadline, commands.toArray(CommandBase[]::new));
+        return Commands.deadline(deadline, commands.toArray(Command[]::new));
       default:
         throw new IllegalArgumentException(
             "Invalid stop event execution behavior: " + stopEvent.executionBehavior);
@@ -241,12 +241,12 @@ public abstract class BaseAutoBuilder {
    * @param stopEvent The stop event to create the command group for
    * @return Command group for the stop event
    */
-  public CommandBase stopEventGroup(StopEvent stopEvent) {
+  public Command stopEventGroup(StopEvent stopEvent) {
     if (stopEvent.names.isEmpty()) {
       return Commands.waitSeconds(stopEvent.waitTime);
     }
 
-    CommandBase eventCommands = getStopEventCommands(stopEvent);
+    Command eventCommands = getStopEventCommands(stopEvent);
 
     switch (stopEvent.waitBehavior) {
       case BEFORE:
@@ -276,7 +276,7 @@ public abstract class BaseAutoBuilder {
    * @param trajectory Single trajectory to follow during the auto
    * @return Autonomous command
    */
-  public CommandBase fullAuto(PathPlannerTrajectory trajectory) {
+  public Command fullAuto(PathPlannerTrajectory trajectory) {
     return fullAuto(new ArrayList<>(List.of(trajectory)));
   }
 
@@ -293,8 +293,8 @@ public abstract class BaseAutoBuilder {
    * @param pathGroup Path group to follow during the auto
    * @return Autonomous command
    */
-  public CommandBase fullAuto(List<PathPlannerTrajectory> pathGroup) {
-    List<CommandBase> commands = new ArrayList<>();
+  public Command fullAuto(List<PathPlannerTrajectory> pathGroup) {
+    List<Command> commands = new ArrayList<>();
 
     commands.add(resetPose(pathGroup.get(0)));
 
@@ -305,7 +305,7 @@ public abstract class BaseAutoBuilder {
 
     commands.add(stopEventGroup(pathGroup.get(pathGroup.size() - 1).getEndStopEvent()));
 
-    return Commands.sequence(commands.toArray(CommandBase[]::new));
+    return Commands.sequence(commands.toArray(Command[]::new));
   }
 
   protected static PIDController pidControllerFromConstants(PIDConstants constants) {

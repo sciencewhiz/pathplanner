@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /** Custom PathPlanner version of MecanumControllerCommand */
-public class PPMecanumControllerCommand extends CommandBase {
+public class PPMecanumControllerCommand extends Command {
   private final Timer timer = new Timer();
   private final PathPlannerTrajectory trajectory;
   private final Supplier<Pose2d> poseSupplier;

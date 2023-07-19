@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /** Custom PathPlanner version of RamseteCommand */
-public class PPRamseteCommand extends CommandBase {
+public class PPRamseteCommand extends Command {
   private final Timer timer = new Timer();
   private final boolean usePID;
   private final PathPlannerTrajectory trajectory;
